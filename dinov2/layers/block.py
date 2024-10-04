@@ -160,6 +160,14 @@ def add_residual(x, brange, residual, residual_scale_factor, scaling_vector=None
 
 attn_bias_cache: Dict[Tuple, Any] = {}
 
+def get_BlockDiagonalMask():
+    try:
+        _BlockDiagonalMask = fmha.BlockDiagonalMask
+    except AttributeError:
+        from xformers.ops.fmha.attn_bias import BlockDiagonalMask as _BlockDiagonalMask
+    
+    return _BlockDiagonalMask
+
 
 def get_attn_bias_and_cat(x_list, branges=None):
     """
@@ -172,7 +180,7 @@ def get_attn_bias_and_cat(x_list, branges=None):
         for b, x in zip(batch_sizes, x_list):
             for _ in range(b):
                 seqlens.append(x.shape[1])
-        attn_bias = fmha.BlockDiagonalMask.from_seqlens(seqlens)
+        attn_bias = get_BlockDiagonalMask().from_seqlens(seqlens)
         attn_bias._batch_sizes = batch_sizes
         attn_bias_cache[all_shapes] = attn_bias
 
